@@ -103,6 +103,13 @@ impl<K: Ord, V, const N: usize> VecMap<K, V, N> {
     }
 }
 
+impl<K, V, const N: usize> Default for VecMap<K, V, N> {
+    #[inline]
+    fn default() -> VecMap<K, V, N> {
+        Self::new()
+    }
+}
+
 /* index */
 
 impl<K, Q: ?Sized, V, const N: usize> Index<&Q> for VecMap<K, V, N>
