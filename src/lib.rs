@@ -3,6 +3,7 @@ use serde::{
     de::{MapAccess, Visitor},
     Deserialize,
 };
+use serde::{ser::SerializeMap, Serialize};
 
 #[cfg(feature = "serde_with")]
 use serde::Deserializer;
@@ -81,6 +82,11 @@ impl<K: Ord, V, const N: usize> VecMap<K, V, N> {
         Q: Ord + ?Sized,
     {
         self.inner.binary_search_by(|v| k.cmp(v.0.borrow())).is_ok()
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.inner.len()
     }
 
     #[inline]
@@ -245,6 +251,25 @@ where
         D: serde::Deserializer<'de>,
     {
         deserializer.deserialize_map(VecMapVisitor::new())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<K, V, const N: usize> Serialize for VecMap<K, V, N>
+where
+    K: Ord + Serialize,
+    V: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.len()))?;
+        for (k, v) in self.iter() {
+            map.serialize_entry(k, v)?;
+        }
+
+        map.end()
     }
 }
 
