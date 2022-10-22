@@ -1,4 +1,3 @@
-
 #[cfg(feature = "serde")]
 use serde::{
     de::{MapAccess, Visitor},
@@ -6,9 +5,9 @@ use serde::{
 };
 
 #[cfg(feature = "serde_with")]
-use serde_with::{DeserializeAs, de::DeserializeAsWrap};
+use serde::Deserializer;
 #[cfg(feature = "serde_with")]
-use serde::{Deserializer};
+use serde_with::{de::DeserializeAsWrap, DeserializeAs};
 
 use smallvec::SmallVec;
 use std::borrow::Borrow;
@@ -124,7 +123,6 @@ where
     K: Ord + Borrow<Q>,
     Q: Ord,
 {
-
     #[inline]
     fn index_mut(&mut self, index: &Q) -> &mut Self::Output {
         self.get_mut(index).unwrap()
@@ -239,8 +237,6 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-
-
         deserializer.deserialize_map(VecMapVisitor::new())
     }
 }
@@ -248,7 +244,7 @@ where
 #[cfg(feature = "serde_with")]
 struct AsVecMapVisitor<K, V, Q, I, const N: usize> {
     _spooky: PhantomData<fn() -> VecMap<K, V, N>>,
-    _spookier: PhantomData<fn() -> VecMap<Q, I, N>>
+    _spookier: PhantomData<fn() -> VecMap<Q, I, N>>,
 }
 
 #[cfg(feature = "serde_with")]
@@ -257,7 +253,7 @@ impl<K, V, Q, I, const N: usize> AsVecMapVisitor<K, V, Q, I, N> {
         AsVecMapVisitor {
             _spooky: PhantomData,
             _spookier: PhantomData,
-         }
+        }
     }
 }
 
@@ -280,8 +276,10 @@ where
     {
         let mut map: VecMap<K, V, N> = VecMap::with_capacity(acc.size_hint().unwrap_or(0));
 
-        while let Some((k,v)) = acc.next_entry::<DeserializeAsWrap<K, Q>, DeserializeAsWrap<V, I>>()? {
-            map.inner.push((k.into_inner(),v.into_inner()));
+        while let Some((k, v)) =
+            acc.next_entry::<DeserializeAsWrap<K, Q>, DeserializeAsWrap<V, I>>()?
+        {
+            map.inner.push((k.into_inner(), v.into_inner()));
         }
 
         map.inner.sort_unstable_by(|lhs, rhs| lhs.0.cmp(&rhs.0));
@@ -292,7 +290,7 @@ where
 }
 
 #[cfg(feature = "serde_with")]
-impl<'de, K, V, Q, I, const N: usize> DeserializeAs<'de, VecMap<K, V,N>> for VecMap<Q, I,N>
+impl<'de, K, V, Q, I, const N: usize> DeserializeAs<'de, VecMap<K, V, N>> for VecMap<Q, I, N>
 where
     K: Ord,
     Q: DeserializeAs<'de, K>,
@@ -302,7 +300,6 @@ where
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_map(AsVecMapVisitor::<K,V,Q,I,N>::new())
+        deserializer.deserialize_map(AsVecMapVisitor::<K, V, Q, I, N>::new())
     }
 }
-
